@@ -11,6 +11,8 @@ fastapi = "^0.111.0"
 black = "^24.4.2"
 flakeheaven = "^3.3.0"
 pydantic-settings = "^2.3.2"
+pymongo = "^4.7.3"
+beanie = "^1.26.0"
 
 [tool.black]
 line-length = 90
