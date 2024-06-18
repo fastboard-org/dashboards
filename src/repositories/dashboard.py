@@ -25,7 +25,6 @@ class DashboardRepository:
 
         await dashboard.update({"$set": data})
         return dashboard
-        return None
 
     async def delete(self, dashboard_id: ObjectId) -> bool:
         dashboard = await Dashboard.get(dashboard_id)
