@@ -39,7 +39,6 @@ class FolderService:
                 description="Could not find folder with the given id",
             )
         dashboards = await self.get_dashboards_of_folder(folder_id)
-        print(dashboards)
         return FolderResponse(
             id=folder.id, name=folder.name, user_id=folder.user_id, dashboards=dashboards
         )
@@ -65,6 +64,13 @@ class FolderService:
         )
 
     async def delete_folder(self, folder_id: ObjectId) -> bool:
+        folder = await self.folder_repository.get_by_id(folder_id)
+        if not folder:
+            raise CustomException(
+                status_code=404,
+                error_code=ERR_FOLDER_NOT_FOUND,
+                description="Could not find folder with the given id",
+            )
         return await self.folder_repository.delete(folder_id)
 
     async def get_folders(self, folder_query: FoldersGet) -> List[FolderResponse]:
