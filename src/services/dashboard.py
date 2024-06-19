@@ -44,7 +44,14 @@ class DashboardService:
     async def get_dashboard_by_id(
         self, dashboard_id: ObjectId
     ) -> Optional[DashboardResponse]:
-        return await self.dashboard_repository.get_by_id(dashboard_id)
+        dashboard = await self.dashboard_repository.get_by_id(dashboard_id)
+        if not dashboard:
+            raise CustomException(
+                status_code=404,
+                error_code=ERR_DASHBOARD_NOT_FOUND,
+                description="Could not find dashboard with the given id",
+            )
+        return dashboard
 
     async def update_dashboard(
         self, dashboard_id, dashboard_query: DashboardUpdate
@@ -67,6 +74,13 @@ class DashboardService:
         return await self.dashboard_repository.update(dashboard_id, dashboard_query)
 
     async def delete_dashboard(self, dashboard_id: ObjectId) -> bool:
+        dashboard = await self.dashboard_repository.get_by_id(dashboard_id)
+        if not dashboard:
+            raise CustomException(
+                status_code=404,
+                error_code=ERR_DASHBOARD_NOT_FOUND,
+                description="Could not find dashboard with the given id",
+            )
         return await self.dashboard_repository.delete(dashboard_id)
 
     async def get_dashboards(
