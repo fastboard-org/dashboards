@@ -10,7 +10,6 @@ from schemas.dashboard import (
     DashboardsGet,
 )
 from repositories.folder import FolderRepository
-from errors import CustomException, ERR_DASHBOARD_NOT_FOUND
 
 
 DashboardsRouter = APIRouter(prefix="/v1/dashboards", tags=["dashboards"])
@@ -34,14 +33,7 @@ async def create_dashboard(
 async def get_dashboard(
     dashboard_id: ObjectId, service: DashboardService = Depends(get_dashboard_service)
 ):
-    dashboard = await service.get_dashboard_by_id(dashboard_id)
-    if not dashboard:
-        raise CustomException(
-            status_code=404,
-            error_code=ERR_DASHBOARD_NOT_FOUND,
-            description="Could not find dashboard with the given id",
-        )
-    return dashboard
+    return await service.get_dashboard_by_id(dashboard_id)
 
 
 @DashboardsRouter.patch("/{dashboard_id}", response_model=DashboardResponse)
@@ -50,8 +42,7 @@ async def update_dashboard(
     dashboard: DashboardUpdate,
     service: DashboardService = Depends(get_dashboard_service),
 ):
-    dashboard = await service.update_dashboard(dashboard_id, dashboard)
-    return dashboard
+    return await service.update_dashboard(dashboard_id, dashboard)
 
 
 @DashboardsRouter.delete("/{dashboard_id}", response_model=bool)
