@@ -33,10 +33,8 @@ class DashboardRepository:
         try:
             dashboard = await Dashboard.get(dashboard_id)
             data = {}
-            for attr in dashboard_query.model_fields:
-                data_attr = getattr(dashboard_query, attr)
-                if data_attr:
-                    data[attr] = data_attr
+            for attr in dashboard_query.model_fields_set:
+                data[attr] = getattr(dashboard_query, attr)
 
             await dashboard.update({"$set": data})
             return dashboard

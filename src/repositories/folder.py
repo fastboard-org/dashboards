@@ -35,10 +35,8 @@ class FolderRepository:
         try:
             folder = await Folder.get(folder_id)
             data = {}
-            for attr in folder_query.model_fields:
-                data_attr = getattr(folder_query, attr)
-                if data_attr:
-                    data[attr] = data_attr
+            for attr in folder_query.model_fields_set:
+                data[attr] = getattr(folder_query, attr)
             await folder.update({"$set": data})
             return folder
         except Exception as e:
