@@ -5,7 +5,6 @@ from services.folder import FolderService
 from beanie import PydanticObjectId as ObjectId
 from schemas.folder import FolderCreate, FolderUpdate, FolderResponse, FoldersGet
 from repositories.dashboard import DashboardRepository
-from errors import CustomException, ERR_FOLDER_NOT_FOUND
 
 
 FoldersRouter = APIRouter(prefix="/v1/folders", tags=["folders"])
@@ -29,14 +28,7 @@ async def create_folder(
 async def get_folder(
     folder_id: ObjectId, service: FolderService = Depends(get_folder_service)
 ):
-    folder = await service.get_folder_by_id(folder_id)
-    if not folder:
-        raise CustomException(
-            status_code=404,
-            error_code=ERR_FOLDER_NOT_FOUND,
-            description="Could not find folder with the given id",
-        )
-    return folder
+    return await service.get_folder_by_id(folder_id)
 
 
 @FoldersRouter.patch("/{folder_id}", response_model=FolderResponse)
@@ -45,8 +37,7 @@ async def update_folder(
     folder: FolderUpdate,
     service: FolderService = Depends(get_folder_service),
 ):
-    folder = await service.update_folder(folder_id, folder)
-    return folder
+    return await service.update_folder(folder_id, folder)
 
 
 @FoldersRouter.delete("/{folder_id}", response_model=bool)
