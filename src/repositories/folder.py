@@ -4,6 +4,8 @@ from typing import List, Optional
 from bson import ObjectId
 from schemas.folder import FolderUpdate, FoldersGet
 from errors import CustomException, ERR_INTERNAL
+from configs.database import mongodb as db
+from schemas.folder import FolderResponse
 
 
 class FolderRepository:
@@ -18,10 +20,23 @@ class FolderRepository:
                 f"Error creating folder: {str(e)}",
             )
 
-    async def get_by_id(self, folder_id: ObjectId) -> Optional[Folder]:
+    async def get_by_id(self, folder_id: ObjectId) -> Optional[FolderResponse]:
         try:
-            folder = await Folder.get(folder_id)
-            return folder
+            pipeline = [
+                {
+                    "$lookup": {
+                        "from": "Dashboard",
+                        "localField": "_id",
+                        "foreignField": "folder_id",
+                        "as": "dashboards",
+                    }
+                },
+                {"$match": {"_id": folder_id}},
+            ]
+            folders = await Folder.aggregate(
+                pipeline, projection_model=FolderResponse
+            ).to_list()
+            return folders[0] if folders else None
         except Exception as e:
             raise CustomException(
                 500,
@@ -49,12 +64,12 @@ class FolderRepository:
     async def delete(self, folder_id: ObjectId) -> bool:
         try:
             folder = await Folder.get(folder_id)
-            # TODO: the deletion of the folder and the update of the
-            # dashboards should bedone in a transaction
-            await folder.delete()
-            await Dashboard.find(Dashboard.folder_id == folder_id).update(
-                {"$set": {"folder_id": None}}
-            )
+            async with db.start_transaction() as session:
+                await Dashboard.find(Dashboard.folder_id == folder_id).update(
+                    {"$set": {"folder_id": None}},
+                    session=session,
+                )
+                await folder.delete(session=session)
             return True
         except Exception as e:
             raise CustomException(
@@ -65,14 +80,29 @@ class FolderRepository:
 
     async def get(self, folder_query: FoldersGet) -> List[Folder]:
         try:
-            folders_query = Folder.find()
+            match_stage = {"$match": {}}
 
             if folder_query.user_id:
-                folders_query = folders_query.find(Folder.user_id == folder_query.user_id)
+                match_stage["$match"]["user_id"] = folder_query.user_id
             if folder_query.name:
-                folders_query = folders_query.find(Folder.name == folder_query.name)
+                match_stage["$match"]["name"] = folder_query.name
 
-            return await folders_query.to_list()
+            pipeline = [
+                {
+                    "$lookup": {
+                        "from": "Dashboard",
+                        "localField": "_id",
+                        "foreignField": "folder_id",
+                        "as": "dashboards",
+                    }
+                },
+                match_stage,
+            ]
+
+            folders = await Folder.aggregate(
+                pipeline, projection_model=FolderResponse
+            ).to_list()
+            return folders
         except Exception as e:
             raise CustomException(
                 500,
