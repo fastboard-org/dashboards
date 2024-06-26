@@ -4,7 +4,6 @@ from typing import List, Optional
 from bson import ObjectId
 from schemas.folder import FolderCreate, FolderUpdate, FolderResponse, FoldersGet
 from repositories.dashboard import DashboardRepository
-from schemas.dashboard import DashboardResponse, DashboardsGet
 from errors import CustomException, ERR_FOLDER_NOT_FOUND
 
 
@@ -38,10 +37,7 @@ class FolderService:
                 error_code=ERR_FOLDER_NOT_FOUND,
                 description="Could not find folder with the given id",
             )
-        dashboards = await self.get_dashboards_of_folder(folder_id)
-        return FolderResponse(
-            id=folder.id, name=folder.name, user_id=folder.user_id, dashboards=dashboards
-        )
+        return folder
 
     async def update_folder(
         self, folder_id: ObjectId, folder_query: FolderUpdate
@@ -55,12 +51,11 @@ class FolderService:
             )
 
         updated_folder = await self.folder_repository.update(folder_id, folder_query)
-        dashboards = await self.get_dashboards_of_folder(folder_id)
         return FolderResponse(
             id=updated_folder.id,
             name=updated_folder.name,
             user_id=updated_folder.user_id,
-            dashboards=dashboards,
+            dashboards=folder.dashboards,
         )
 
     async def delete_folder(self, folder_id: ObjectId) -> bool:
@@ -74,22 +69,4 @@ class FolderService:
         return await self.folder_repository.delete(folder_id)
 
     async def get_folders(self, folder_query: FoldersGet) -> List[FolderResponse]:
-        folders = await self.folder_repository.get(folder_query)
-        res = []
-        for folder in folders:
-            dashboards = await self.get_dashboards_of_folder(folder.id)
-            res.append(
-                FolderResponse(
-                    id=folder.id,
-                    name=folder.name,
-                    user_id=folder.user_id,
-                    dashboards=dashboards,
-                )
-            )
-
-        return res
-
-    async def get_dashboards_of_folder(
-        self, folder_id: ObjectId
-    ) -> List[DashboardResponse]:
-        return await self.dashboard_repository.get(DashboardsGet(folder_id=folder_id))
+        return await self.folder_repository.get(folder_query)
