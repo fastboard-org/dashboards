@@ -12,3 +12,4 @@ class Dashboard(Document):
 
     class Settings:
         collection = "dashboards"
+        indexes = ["folder_id"]
