@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from beanie import PydanticObjectId as ObjectId
+from pydantic import Field
 
 
 class DashboardCreate(BaseModel):
@@ -23,7 +24,7 @@ class DashboardsGet(BaseModel):
 
 
 class DashboardResponse(BaseModel):
-    id: ObjectId
+    id: ObjectId = Field(alias="_id")
     user_id: int
     name: str
     folder_id: Optional[ObjectId] = None
@@ -31,3 +32,4 @@ class DashboardResponse(BaseModel):
 
     class Config:
         from_attributes = True
+        populate_by_name = True

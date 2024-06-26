@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from beanie import PydanticObjectId as ObjectId
 from schemas.dashboard import DashboardResponse
+from pydantic import Field
 
 
 class FolderCreate(BaseModel):
@@ -19,10 +20,11 @@ class FoldersGet(BaseModel):
 
 
 class FolderResponse(BaseModel):
-    id: ObjectId
+    id: ObjectId = Field(alias="_id")
     name: str
     user_id: int
     dashboards: List[DashboardResponse]
 
     class Config:
         from_attributes = True
+        populate_by_name = True
