@@ -6,15 +6,16 @@ from schemas.connection import (
     ConnectionUpdate,
     ConnectionsGet,
 )
-from models.query import Query
-from configs.database import mongodb as db
 from schemas.connection import ConnectionResponse
+from motor.motor_asyncio import AsyncIOMotorClient as Session
 
 
 class ConnectionRepository:
+    session: Session = None
+
     async def create(self, connection: Connection) -> Connection:
         try:
-            await connection.insert()
+            await connection.insert(session=self.session)
             return connection
         except Exception as e:
             raise CustomException(
@@ -35,7 +36,7 @@ class ConnectionRepository:
                 {"$match": {"_id": connection_id}},
             ]
             connections = await Connection.aggregate(
-                pipeline, projection_model=ConnectionResponse
+                pipeline, projection_model=ConnectionResponse, session=self.session
             ).to_list()
             return connections[0] if connections else None
         except Exception as e:
@@ -47,11 +48,11 @@ class ConnectionRepository:
         self, connection_id: ObjectId, connection_query: ConnectionUpdate
     ) -> Optional[Connection]:
         try:
-            connection = await Connection.get(connection_id)
+            connection = await Connection.get(connection_id, session=self.session)
             data = {}
             for attr in connection_query.model_fields_set:
                 data[attr] = getattr(connection_query, attr)
-            await connection.update({"$set": data})
+            await connection.update({"$set": data}, session=self.session)
             return connection
         except Exception as e:
             raise CustomException(
@@ -60,13 +61,9 @@ class ConnectionRepository:
 
     async def delete(self, connection_id: ObjectId) -> bool:
         try:
-            connection = await Connection.get(connection_id)
-            async with db.start_transaction() as session:
-                await Query.find(Query.connection_id == connection_id).delete(
-                    session=session
-                )
-                await connection.delete(session=session)
-            return True
+            connection = await Connection.get(connection_id, session=self.session)
+            res = await connection.delete(session=self.session)
+            return res.deleted_count > 0
         except Exception as e:
             raise CustomException(
                 500, ERR_INTERNAL, f"Error deleting connection: {str(e)}"
@@ -96,7 +93,7 @@ class ConnectionRepository:
             ]
 
             connections = await Connection.aggregate(
-                pipeline, projection_model=ConnectionResponse
+                pipeline, projection_model=ConnectionResponse, session=self.session
             ).to_list()
             return connections
 

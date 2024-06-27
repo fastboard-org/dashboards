@@ -1,17 +1,18 @@
 from models.folder import Folder
-from models.dashboard import Dashboard
 from typing import List, Optional
 from bson import ObjectId
 from schemas.folder import FolderUpdate, FoldersGet
 from errors import CustomException, ERR_INTERNAL
-from configs.database import mongodb as db
 from schemas.folder import FolderResponse
+from motor.motor_asyncio import AsyncIOMotorClient as Session
 
 
 class FolderRepository:
+    session: Session = None
+
     async def create(self, folder: Folder) -> Folder:
         try:
-            await folder.insert()
+            await folder.insert(session=self.session)
             return folder
         except Exception as e:
             raise CustomException(
@@ -34,7 +35,7 @@ class FolderRepository:
                 {"$match": {"_id": folder_id}},
             ]
             folders = await Folder.aggregate(
-                pipeline, projection_model=FolderResponse
+                pipeline, projection_model=FolderResponse, session=self.session
             ).to_list()
             return folders[0] if folders else None
         except Exception as e:
@@ -48,11 +49,11 @@ class FolderRepository:
         self, folder_id: ObjectId, folder_query: FolderUpdate
     ) -> Optional[Folder]:
         try:
-            folder = await Folder.get(folder_id)
+            folder = await Folder.get(folder_id, session=self.session)
             data = {}
             for attr in folder_query.model_fields_set:
                 data[attr] = getattr(folder_query, attr)
-            await folder.update({"$set": data})
+            await folder.update({"$set": data}, session=self.session)
             return folder
         except Exception as e:
             raise CustomException(
@@ -63,14 +64,9 @@ class FolderRepository:
 
     async def delete(self, folder_id: ObjectId) -> bool:
         try:
-            folder = await Folder.get(folder_id)
-            async with db.start_transaction() as session:
-                await Dashboard.find(Dashboard.folder_id == folder_id).update(
-                    {"$set": {"folder_id": None}},
-                    session=session,
-                )
-                await folder.delete(session=session)
-            return True
+            folder = await Folder.get(folder_id, session=self.session)
+            res = await folder.delete(session=self.session)
+            return res.deleted_count > 0
         except Exception as e:
             raise CustomException(
                 500,
@@ -100,7 +96,7 @@ class FolderRepository:
             ]
 
             folders = await Folder.aggregate(
-                pipeline, projection_model=FolderResponse
+                pipeline, projection_model=FolderResponse, session=self.session
             ).to_list()
             return folders
         except Exception as e:
