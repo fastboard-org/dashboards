@@ -1,7 +1,7 @@
 from models.folder import Folder
 from typing import List, Optional
 from bson import ObjectId
-from schemas.folder import FolderUpdate, FoldersGet
+from schemas.folder import FolderUpdate
 from errors import CustomException, ERR_INTERNAL
 from schemas.folder import FolderResponse
 from motor.motor_asyncio import AsyncIOMotorClient as Session
@@ -74,15 +74,13 @@ class FolderRepository:
                 f"Error deleting folder: {str(e)}",
             )
 
-    async def get(self, folder_query: FoldersGet) -> List[Folder]:
+    async def get(self, filters: List) -> List[Folder]:
         try:
             match_stage = {"$match": {}}
-
-            if folder_query.user_id:
-                match_stage["$match"]["user_id"] = folder_query.user_id
-            if folder_query.name:
-                match_stage["$match"]["name"] = folder_query.name
-
+            for filter in filters:
+                match_stage["$match"][filter["name"]] = {
+                    filter["operator"]: filter["value"]
+                }
             pipeline = [
                 {
                     "$lookup": {
@@ -94,7 +92,6 @@ class FolderRepository:
                 },
                 match_stage,
             ]
-
             folders = await Folder.aggregate(
                 pipeline, projection_model=FolderResponse, session=self.session
             ).to_list()

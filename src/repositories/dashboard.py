@@ -3,7 +3,6 @@ from typing import List, Optional
 from bson import ObjectId
 from schemas.dashboard import (
     DashboardUpdate,
-    DashboardsGet,
 )
 from errors import CustomException, ERR_INTERNAL
 from motor.motor_asyncio import AsyncIOMotorClient as Session
@@ -56,24 +55,15 @@ class DashboardRepository:
                 500, ERR_INTERNAL, f"Error deleting dashboard: {str(e)}"
             )
 
-    async def get(self, dashboard_query: DashboardsGet) -> List[Dashboard]:
+    async def get(self, filters: List) -> List[Dashboard]:
         try:
             dashboards_query = Dashboard.find(session=self.session)
-
-            if dashboard_query.user_id:
-                dashboards_query = dashboards_query.find(
-                    Dashboard.user_id == dashboard_query.user_id, session=self.session
+            for filter in filters:
+                dashboards_query.find(
+                    {filter["name"]: {filter["operator"]: filter["value"]}}
                 )
-            if dashboard_query.name:
-                dashboards_query = dashboards_query.find(
-                    Dashboard.name == dashboard_query.name, session=self.session
-                )
-            if dashboard_query.folder_id:
-                dashboards_query = dashboards_query.find(
-                    Dashboard.folder_id == dashboard_query.folder_id, session=self.session
-                )
-
             return await dashboards_query.to_list()
+
         except Exception as e:
             raise CustomException(
                 500, ERR_INTERNAL, f"Error fetching dashboards: {str(e)}"

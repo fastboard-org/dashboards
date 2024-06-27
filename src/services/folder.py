@@ -4,7 +4,8 @@ from bson import ObjectId
 from schemas.folder import FolderCreate, FolderUpdate, FolderResponse, FoldersGet
 from errors import CustomException, ERR_FOLDER_NOT_FOUND
 from repositories.registry import RepositoryRegistry
-from schemas.dashboard import DashboardsGet, DashboardUpdate
+from schemas.dashboard import DashboardUpdate
+from configs.database import Operators
 
 
 class FolderService:
@@ -67,7 +68,7 @@ class FolderService:
 
         async def delete_folder_transaction(repo_registry: RepositoryRegistry):
             dashboards = await repo_registry.dashboard.get(
-                DashboardsGet(folder_id=folder_id)
+                [{"name": "folder_id", "value": folder_id, "operator": Operators.EQ}]
             )
             for dashboard in dashboards:
                 await repo_registry.dashboard.update(
@@ -78,4 +79,21 @@ class FolderService:
         return await self.repo.transaction(delete_folder_transaction)
 
     async def get_folders(self, folder_query: FoldersGet) -> List[FolderResponse]:
-        return await self.repo.folder.get(folder_query)
+        filters = []
+        if folder_query.user_id:
+            filters.append(
+                {
+                    "name": "user_id",
+                    "value": folder_query.user_id,
+                    "operator": Operators.EQ,
+                }
+            )
+        if folder_query.name:
+            filters.append(
+                {
+                    "name": "name",
+                    "value": folder_query.name,
+                    "operator": Operators.EQ,
+                }
+            )
+        return await self.repo.folder.get(filters)

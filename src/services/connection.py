@@ -9,8 +9,8 @@ from beanie import PydanticObjectId as ObjectId
 from errors import CustomException, ERR_CONNECTION_NOT_FOUND
 from typing import Optional, List
 from repositories.registry import RepositoryRegistry
-from schemas.dashboard import DashboardsGet, DashboardUpdate
-from schemas.query import QueriesGet
+from schemas.dashboard import DashboardUpdate
+from configs.database import Operators
 
 
 class ConnectionService:
@@ -87,12 +87,24 @@ class ConnectionService:
 
         async def delete_connection_transaction(repo_registry: RepositoryRegistry):
             queries = await repo_registry.query.get(
-                QueriesGet(connection_id=connection_id)
+                [
+                    {
+                        "name": "connection_id",
+                        "value": connection_id,
+                        "operator": Operators.EQ,
+                    }
+                ]
             )
             for query in queries:
                 await repo_registry.query.delete(query.id)
                 dashboards = await repo_registry.dashboard.get(
-                    DashboardsGet(query_id=query.id)
+                    [
+                        {
+                            "name": "metadata.queries",
+                            "value": {"id": str(query.id)},
+                            "operator": Operators.EM,
+                        }
+                    ]
                 )
                 for dashboard in dashboards:
                     dashboard_queries = dashboard.metadata.get("queries", [])
@@ -110,4 +122,29 @@ class ConnectionService:
     async def get_connections(
         self, connections_query: ConnectionsGet
     ) -> List[ConnectionResponse]:
-        return await self.repo.connection.get(connections_query)
+        filters = []
+        if connections_query.user_id:
+            filters.append(
+                {
+                    "name": "user_id",
+                    "value": connections_query.user_id,
+                    "operator": Operators.EQ,
+                }
+            )
+        if connections_query.type:
+            filters.append(
+                {
+                    "name": "type",
+                    "value": connections_query.type,
+                    "operator": Operators.EQ,
+                }
+            )
+        if connections_query.name:
+            filters.append(
+                {
+                    "name": "name",
+                    "value": connections_query.name,
+                    "operator": Operators.EQ,
+                }
+            )
+        return await self.repo.connection.get(filters)

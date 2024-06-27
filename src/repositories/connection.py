@@ -4,7 +4,6 @@ from beanie import PydanticObjectId as ObjectId
 from typing import Optional, List
 from schemas.connection import (
     ConnectionUpdate,
-    ConnectionsGet,
 )
 from schemas.connection import ConnectionResponse
 from motor.motor_asyncio import AsyncIOMotorClient as Session
@@ -69,17 +68,13 @@ class ConnectionRepository:
                 500, ERR_INTERNAL, f"Error deleting connection: {str(e)}"
             )
 
-    async def get(self, connection_query: ConnectionsGet) -> List[ConnectionResponse]:
+    async def get(self, filters: List) -> List[Connection]:
         try:
             match_stage = {"$match": {}}
-
-            if connection_query.user_id:
-                match_stage["$match"]["user_id"] = connection_query.user_id
-            if connection_query.type:
-                match_stage["$match"]["type"] = connection_query.type
-            if connection_query.name:
-                match_stage["$match"]["name"] = connection_query.name
-
+            for filter in filters:
+                match_stage["$match"][filter["name"]] = {
+                    filter["operator"]: filter["value"]
+                }
             pipeline = [
                 match_stage,
                 {
@@ -91,7 +86,6 @@ class ConnectionRepository:
                     }
                 },
             ]
-
             connections = await Connection.aggregate(
                 pipeline, projection_model=ConnectionResponse, session=self.session
             ).to_list()

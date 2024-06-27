@@ -4,7 +4,8 @@ from errors import CustomException, ERR_QUERY_NOT_FOUND, ERR_CONNECTION_NOT_FOUN
 from typing import Optional, List
 from schemas.query import QueriesGet, QueryResponse, QueryCreate, QueryUpdate
 from repositories.registry import RepositoryRegistry
-from schemas.dashboard import DashboardsGet, DashboardUpdate
+from schemas.dashboard import DashboardUpdate
+from configs.database import Operators
 
 
 class QueryService:
@@ -62,8 +63,28 @@ class QueryService:
         return updated_query
 
     async def get_queries(self, query_query: QueriesGet) -> List[QueryResponse]:
-        queries = await self.repo.query.get(query_query)
-        return queries
+        filters = []
+        if query_query.connection_id:
+            filters.append(
+                {
+                    "name": "connection_id",
+                    "value": query_query.connection_id,
+                    "operator": Operators.EQ,
+                }
+            )
+        if query_query.user_id:
+            filters.append(
+                {
+                    "name": "user_id",
+                    "value": query_query.user_id,
+                    "operator": Operators.EQ,
+                }
+            )
+        if query_query.name:
+            filters.append(
+                {"name": "name", "value": query_query.name, "operator": Operators.EQ}
+            )
+        return await self.repo.query.get(filters)
 
     async def delete_query(self, query_id: ObjectId) -> bool:
         query = await self.repo.query.get_by_id(query_id)
@@ -76,7 +97,13 @@ class QueryService:
 
         async def delete_query_transaction(repo_registry: RepositoryRegistry):
             dashboards = await repo_registry.dashboard.get(
-                DashboardsGet(query_id=query_id)
+                [
+                    {
+                        "name": "metadata.queries",
+                        "value": {"id": str(query_id)},
+                        "operator": Operators.EM,
+                    }
+                ]
             )
             for dashboard in dashboards:
                 dashboard_queries = dashboard.metadata.get("queries", [])

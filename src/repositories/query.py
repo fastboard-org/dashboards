@@ -2,7 +2,7 @@ from models.query import Query
 from errors import CustomException, ERR_INTERNAL
 from beanie import PydanticObjectId as ObjectId
 from typing import Optional, List
-from schemas.query import QueryUpdate, QueriesGet
+from schemas.query import QueryUpdate
 from motor.motor_asyncio import AsyncIOMotorClient as Session
 
 
@@ -44,20 +44,12 @@ class QueryRepository:
         except Exception as e:
             raise CustomException(500, ERR_INTERNAL, f"Error deleting query: {str(e)}")
 
-    async def get(self, query_query: QueriesGet) -> List[Query]:
+    async def get(self, filters: List) -> List[Query]:
         try:
             queries_query = Query.find(session=self.session)
-            if query_query.connection_id:
-                queries_query = queries_query.find(
-                    Query.connection_id == query_query.connection_id, session=self.session
-                )
-            if query_query.user_id:
-                queries_query = queries_query.find(
-                    Query.user_id == query_query.user_id, session=self.session
-                )
-            if query_query.name:
-                queries_query = queries_query.find(
-                    Query.name == query_query.name, session=self.session
+            for filter in filters:
+                queries_query.find(
+                    {filter["name"]: {filter["operator"]: filter["value"]}}
                 )
             return await queries_query.to_list()
         except Exception as e:

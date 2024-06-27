@@ -14,6 +14,7 @@ from errors import (
     ERR_QUERY_NOT_FOUND,
 )
 from repositories.registry import RepositoryRegistry
+from configs.database import Operators
 
 
 class DashboardService:
@@ -34,18 +35,19 @@ class DashboardService:
                     error_code=ERR_FOLDER_NOT_FOUND,
                     description="Could not find folder with the given id",
                 )
-
-        queries = dashboard_query.metadata.get("queries", [])
-        if queries:
-            for query in queries:
-                query_id = query.get("id")
-                query = await self.repo.query.get_by_id(query_id)
-                if not query:
-                    raise CustomException(
-                        status_code=404,
-                        error_code=ERR_QUERY_NOT_FOUND,
-                        description="Could not find query with the given id",
-                    )
+        metadata = dashboard_query.metadata
+        if metadata:
+            queries = dashboard_query.metadata.get("queries", [])
+            if queries:
+                for query in queries:
+                    query_id = query.get("id")
+                    query = await self.repo.query.get_by_id(query_id)
+                    if not query:
+                        raise CustomException(
+                            status_code=404,
+                            error_code=ERR_QUERY_NOT_FOUND,
+                            description="Could not find query with the given id",
+                        )
 
         dashboard = Dashboard(
             user_id=dashboard_query.user_id,
@@ -85,18 +87,19 @@ class DashboardService:
                     error_code=ERR_FOLDER_NOT_FOUND,
                     description="Could not find folder with the given id",
                 )
-
-        queries = dashboard_query.metadata.get("queries", [])
-        if queries:
-            for query in queries:
-                query_id = query.get("id")
-                query = await self.repo.query.get_by_id(query_id)
-                if not query:
-                    raise CustomException(
-                        status_code=404,
-                        error_code=ERR_QUERY_NOT_FOUND,
-                        description="Could not find query with the given id",
-                    )
+        metadata = dashboard_query.metadata
+        if metadata:
+            queries = dashboard_query.metadata.get("queries", [])
+            if queries:
+                for query in queries:
+                    query_id = query.get("id")
+                    query = await self.repo.query.get_by_id(query_id)
+                    if not query:
+                        raise CustomException(
+                            status_code=404,
+                            error_code=ERR_QUERY_NOT_FOUND,
+                            description="Could not find query with the given id",
+                        )
 
         return await self.repo.dashboard.update(dashboard_id, dashboard_query)
 
@@ -113,4 +116,25 @@ class DashboardService:
     async def get_dashboards(
         self, dashboards_query: DashboardsGet
     ) -> List[DashboardResponse]:
-        return await self.repo.dashboard.get(dashboards_query)
+        filters = []
+        if dashboards_query.user_id:
+            filters.append(
+                {
+                    "name": "user_id",
+                    "value": dashboards_query.user_id,
+                    "operator": Operators.EQ,
+                }
+            )
+        if dashboards_query.name:
+            filters.append(
+                {"name": "name", "value": dashboards_query.name, "operator": Operators.EQ}
+            )
+        if dashboards_query.folder_id:
+            filters.append(
+                {
+                    "name": "folder_id",
+                    "value": dashboards_query.folder_id,
+                    "operator": Operators.EQ,
+                }
+            )
+        return await self.repo.dashboard.get(filters)
