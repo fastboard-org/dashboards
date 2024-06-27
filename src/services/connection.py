@@ -1,5 +1,3 @@
-from repositories.connection import ConnectionRepository
-from repositories.query import QueryRepository
 from models.connection import Connection
 from schemas.connection import (
     ConnectionCreate,
@@ -10,16 +8,17 @@ from schemas.connection import (
 from beanie import PydanticObjectId as ObjectId
 from errors import CustomException, ERR_CONNECTION_NOT_FOUND
 from typing import Optional, List
+from repositories.registry import RepositoryRegistry
+from schemas.dashboard import DashboardsGet, DashboardUpdate
+from schemas.query import QueriesGet
 
 
 class ConnectionService:
     def __init__(
         self,
-        connection_repository: ConnectionRepository,
-        query_repository: QueryRepository,
+        repository: RepositoryRegistry,
     ):
-        self.connection_repository = connection_repository
-        self.query_repository = query_repository
+        self.repo = repository
 
     async def create_connection(
         self, connection_query: ConnectionCreate
@@ -31,7 +30,7 @@ class ConnectionService:
             credentials=connection_query.credentials,
             variables=connection_query.variables,
         )
-        created_connection = await self.connection_repository.create(connection)
+        created_connection = await self.repo.connection.create(connection)
         return ConnectionResponse(
             id=created_connection.id,
             name=created_connection.name,
@@ -45,7 +44,7 @@ class ConnectionService:
     async def get_connection_by_id(
         self, connection_id: ObjectId
     ) -> Optional[ConnectionResponse]:
-        connection = await self.connection_repository.get_by_id(connection_id)
+        connection = await self.repo.connection.get_by_id(connection_id)
         if not connection:
             raise CustomException(
                 status_code=404,
@@ -57,14 +56,14 @@ class ConnectionService:
     async def update_connection(
         self, connection_id: ObjectId, connection_query: ConnectionUpdate
     ) -> Optional[ConnectionResponse]:
-        connection = await self.connection_repository.get_by_id(connection_id)
+        connection = await self.repo.connection.get_by_id(connection_id)
         if not connection:
             raise CustomException(
                 status_code=404,
                 error_code=ERR_CONNECTION_NOT_FOUND,
                 description="Could not find connection with the given id",
             )
-        updated_connection = await self.connection_repository.update(
+        updated_connection = await self.repo.connection.update(
             connection_id, connection_query
         )
         return ConnectionResponse(
@@ -78,16 +77,37 @@ class ConnectionService:
         )
 
     async def delete_connection(self, connection_id: ObjectId) -> bool:
-        connection = await self.connection_repository.get_by_id(connection_id)
+        connection = await self.repo.connection.get_by_id(connection_id)
         if not connection:
             raise CustomException(
                 status_code=404,
                 error_code=ERR_CONNECTION_NOT_FOUND,
                 description="Could not find connection with the given id",
             )
-        return await self.connection_repository.delete(connection_id)
+
+        async def delete_connection_transaction(repo_registry: RepositoryRegistry):
+            queries = await repo_registry.query.get(
+                QueriesGet(connection_id=connection_id)
+            )
+            for query in queries:
+                await repo_registry.query.delete(query.id)
+                dashboards = await repo_registry.dashboard.get(
+                    DashboardsGet(query_id=query.id)
+                )
+                for dashboard in dashboards:
+                    dashboard_queries = dashboard.metadata.get("queries", [])
+                    dashboard_queries = [
+                        q for q in dashboard_queries if q.get("id") != str(query.id)
+                    ]
+                    dashboard_query = DashboardUpdate(
+                        metadata={"queries": dashboard_queries}
+                    )
+                    await repo_registry.dashboard.update(dashboard.id, dashboard_query)
+            return await self.repo.connection.delete(connection_id)
+
+        return await self.repo.transaction(delete_connection_transaction)
 
     async def get_connections(
         self, connections_query: ConnectionsGet
     ) -> List[ConnectionResponse]:
-        return await self.connection_repository.get(connections_query)
+        return await self.repo.connection.get(connections_query)
