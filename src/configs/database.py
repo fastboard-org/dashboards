@@ -31,10 +31,9 @@ class MongoDB:
         self.client.close()
 
     @asynccontextmanager
-    async def start_transaction(self):
+    async def start_session(self):
         async with await self.client.start_session() as session:
-            async with session.start_transaction():
-                yield session
+            yield session
 
 
 mongodb = MongoDB()
