@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends
 from typing import List
-from repositories.dashboard import DashboardRepository
 from services.dashboard import DashboardService
 from beanie import PydanticObjectId as ObjectId
 from schemas.dashboard import (
@@ -9,16 +8,16 @@ from schemas.dashboard import (
     DashboardResponse,
     DashboardsGet,
 )
-from repositories.folder import FolderRepository
+from repositories.registry import RepositoryRegistry
+from configs.database import mongodb as db
 
 
 DashboardsRouter = APIRouter(prefix="/v1/dashboards", tags=["dashboards"])
 
 
 def get_dashboard_service():
-    dashboard_repository = DashboardRepository()
-    folder_repository = FolderRepository()
-    service = DashboardService(dashboard_repository, folder_repository)
+    repository = RepositoryRegistry(db)
+    service = DashboardService(repository)
     return service
 
 

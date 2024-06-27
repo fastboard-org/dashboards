@@ -1,7 +1,5 @@
 from fastapi import APIRouter, Depends
 from typing import List
-from repositories.query import QueryRepository
-from repositories.connection import ConnectionRepository
 from services.query import QueryService
 from beanie import PydanticObjectId as ObjectId
 from schemas.query import (
@@ -10,15 +8,16 @@ from schemas.query import (
     QueryResponse,
     QueriesGet,
 )
+from repositories.registry import RepositoryRegistry
+from configs.database import mongodb as db
 
 
 QueriesRouter = APIRouter(prefix="/v1/queries", tags=["queries"])
 
 
 def get_query_service():
-    query_repository = QueryRepository()
-    connection_repository = ConnectionRepository()
-    service = QueryService(connection_repository, query_repository)
+    repository = RepositoryRegistry(db)
+    service = QueryService(repository)
     return service
 
 

@@ -1,19 +1,18 @@
 from fastapi import APIRouter, Depends
 from typing import List
-from repositories.folder import FolderRepository
 from services.folder import FolderService
 from beanie import PydanticObjectId as ObjectId
 from schemas.folder import FolderCreate, FolderUpdate, FolderResponse, FoldersGet
-from repositories.dashboard import DashboardRepository
+from repositories.registry import RepositoryRegistry
+from configs.database import mongodb as db
 
 
 FoldersRouter = APIRouter(prefix="/v1/folders", tags=["folders"])
 
 
 def get_folder_service():
-    folder_repository = FolderRepository()
-    dashboard_repository = DashboardRepository()
-    service = FolderService(folder_repository, dashboard_repository)
+    repository = RepositoryRegistry(db)
+    service = FolderService(repository)
     return service
 
 
