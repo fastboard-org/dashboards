@@ -10,7 +10,7 @@ class ConnectionType(str, Enum):
 
 class Connection(Document):
     name: str
-    user_id: int
+    user_id: str
     type: ConnectionType
     credentials: dict = {}
     variables: dict = {}

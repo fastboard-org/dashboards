@@ -5,7 +5,7 @@ from pydantic import Field
 
 class Query(Document):
     name: str
-    user_id: int
+    user_id: str
     connection_id: ObjectId
     metadata: dict = Field(default_factory=dict)
 

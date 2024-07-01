@@ -8,7 +8,7 @@ from pydantic import Field
 
 class ConnectionCreate(BaseModel):
     name: str
-    user_id: int
+    user_id: str
     type: ConnectionType
     credentials: Optional[dict] = {}
     variables: Optional[dict] = {}
@@ -21,7 +21,7 @@ class ConnectionUpdate(BaseModel):
 
 
 class ConnectionsGet(BaseModel):
-    user_id: Optional[int] = None
+    user_id: Optional[str] = None
     name: Optional[str] = None
     type: Optional[ConnectionType] = None
 
@@ -29,7 +29,7 @@ class ConnectionsGet(BaseModel):
 class ConnectionResponse(BaseModel):
     id: ObjectId = Field(alias="_id")
     name: str
-    user_id: int
+    user_id: str
     type: ConnectionType
     credentials: Optional[dict] = {}
     variables: Optional[dict] = {}

@@ -7,7 +7,7 @@ from pydantic import Field
 
 class FolderCreate(BaseModel):
     name: str
-    user_id: int
+    user_id: str
 
 
 class FolderUpdate(BaseModel):
@@ -15,14 +15,14 @@ class FolderUpdate(BaseModel):
 
 
 class FoldersGet(BaseModel):
-    user_id: Optional[int] = None
+    user_id: Optional[str] = None
     name: Optional[str] = None
 
 
 class FolderResponse(BaseModel):
     id: ObjectId = Field(alias="_id")
     name: str
-    user_id: int
+    user_id: str
     dashboards: List[DashboardResponse]
 
     class Config:

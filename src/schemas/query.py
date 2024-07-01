@@ -6,7 +6,7 @@ from pydantic import Field
 
 class QueryCreate(BaseModel):
     name: str
-    user_id: int
+    user_id: str
     connection_id: ObjectId
     metadata: Optional[dict] = {}
 
@@ -17,7 +17,7 @@ class QueryUpdate(BaseModel):
 
 
 class QueriesGet(BaseModel):
-    user_id: Optional[int] = None
+    user_id: Optional[str] = None
     name: Optional[str] = None
     connection_id: Optional[ObjectId] = None
 
@@ -25,7 +25,7 @@ class QueriesGet(BaseModel):
 class QueryResponse(BaseModel):
     id: ObjectId = Field(alias="_id")
     name: str
-    user_id: int
+    user_id: str
     connection_id: ObjectId
     metadata: Optional[dict] = {}
 

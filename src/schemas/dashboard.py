@@ -5,7 +5,7 @@ from pydantic import Field
 
 
 class DashboardCreate(BaseModel):
-    user_id: int
+    user_id: str
     name: str
     folder_id: Optional[ObjectId] = None
     metadata: Optional[dict] = {}
@@ -18,14 +18,14 @@ class DashboardUpdate(BaseModel):
 
 
 class DashboardsGet(BaseModel):
-    user_id: Optional[int] = None
+    user_id: Optional[str] = None
     folder_id: Optional[ObjectId] = None
     name: Optional[str] = None
 
 
 class DashboardResponse(BaseModel):
     id: ObjectId = Field(alias="_id")
-    user_id: int
+    user_id: str
     name: str
     folder_id: Optional[ObjectId] = None
     metadata: Optional[dict] = {}
