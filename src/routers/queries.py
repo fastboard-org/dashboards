@@ -7,6 +7,7 @@ from schemas.query import (
     QueryUpdate,
     QueryResponse,
     QueriesGet,
+    FullQueryResponse,
 )
 from repositories.registry import RepositoryRegistry
 from configs.database import mongodb as db
@@ -28,7 +29,7 @@ async def create_query(
     return await service.create_query(query)
 
 
-@QueriesRouter.get("/{query_id}", response_model=QueryResponse)
+@QueriesRouter.get("/{query_id}", response_model=FullQueryResponse)
 async def get_query(
     query_id: ObjectId, service: QueryService = Depends(get_query_service)
 ):
@@ -51,7 +52,7 @@ async def delete_query(
     return await service.delete_query(query_id)
 
 
-@QueriesRouter.get("/", response_model=List[QueryResponse])
+@QueriesRouter.get("/", response_model=List[FullQueryResponse])
 async def list_queries(
     queries: QueriesGet = Depends(), service: QueryService = Depends(get_query_service)
 ):

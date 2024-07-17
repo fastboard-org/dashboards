@@ -4,6 +4,7 @@ from beanie import PydanticObjectId as ObjectId
 from typing import Optional, List
 from schemas.query import QueryUpdate
 from motor.motor_asyncio import AsyncIOMotorClient as Session
+from schemas.query import FullQueryResponse
 
 
 class QueryRepository:
@@ -16,10 +17,40 @@ class QueryRepository:
         except Exception as e:
             raise CustomException(500, ERR_INTERNAL, f"Error creating query: {str(e)}")
 
-    async def get_by_id(self, query_id: ObjectId) -> Optional[Query]:
+    async def get_by_id(self, query_id: ObjectId) -> Optional[FullQueryResponse]:
         try:
-            query = await Query.get(query_id, session=self.session)
-            return query
+            pipeline = [
+                {"$match": {"_id": query_id}},
+                {
+                    "$lookup": {
+                        "from": "Connection",
+                        "localField": "connection_id",
+                        "foreignField": "_id",
+                        "as": "connection",
+                    }
+                },
+                {
+                    "$unwind": {
+                        "path": "$connection",
+                        "preserveNullAndEmptyArrays": True,
+                    }
+                },
+                {
+                    "$addFields": {
+                        "connection_type": "$connection.type",
+                    }
+                },
+                {
+                    "$project": {
+                        "connection": 0,
+                    }
+                },
+            ]
+            queries = await Query.aggregate(
+                pipeline, projection_model=FullQueryResponse, session=self.session
+            ).to_list()
+            return queries[0] if queries else None
+
         except Exception as e:
             raise CustomException(500, ERR_INTERNAL, f"Error fetching query: {str(e)}")
 
@@ -44,13 +75,45 @@ class QueryRepository:
         except Exception as e:
             raise CustomException(500, ERR_INTERNAL, f"Error deleting query: {str(e)}")
 
-    async def get(self, filters: List) -> List[Query]:
+    async def get(self, filters: List) -> List[FullQueryResponse]:
         try:
-            queries_query = Query.find(session=self.session)
+            match_stage = {"$match": {}}
             for filter in filters:
-                queries_query.find(
-                    {filter["name"]: {filter["operator"]: filter["value"]}}
-                )
-            return await queries_query.to_list()
+                match_stage["$match"][filter["name"]] = {
+                    filter["operator"]: filter["value"]
+                }
+
+            pipeline = [
+                match_stage,
+                {
+                    "$lookup": {
+                        "from": "Connection",
+                        "localField": "connection_id",
+                        "foreignField": "_id",
+                        "as": "connection",
+                    }
+                },
+                {
+                    "$unwind": {
+                        "path": "$connection",
+                        "preserveNullAndEmptyArrays": True,
+                    }
+                },
+                {
+                    "$addFields": {
+                        "connection_type": "$connection.type",
+                    }
+                },
+                {
+                    "$project": {
+                        "connection": 0,
+                    }
+                },
+            ]
+            queries = await Query.aggregate(
+                pipeline, projection_model=FullQueryResponse, session=self.session
+            ).to_list()
+            return queries
+
         except Exception as e:
             raise CustomException(500, ERR_INTERNAL, f"Error fetching queries: {str(e)}")

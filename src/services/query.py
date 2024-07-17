@@ -2,7 +2,13 @@ from models.query import Query
 from beanie import PydanticObjectId as ObjectId
 from errors import CustomException, ERR_QUERY_NOT_FOUND, ERR_CONNECTION_NOT_FOUND
 from typing import Optional, List
-from schemas.query import QueriesGet, QueryResponse, QueryCreate, QueryUpdate
+from schemas.query import (
+    QueriesGet,
+    QueryResponse,
+    QueryCreate,
+    QueryUpdate,
+    FullQueryResponse,
+)
 from repositories.registry import RepositoryRegistry
 from configs.database import Operators
 
@@ -37,7 +43,7 @@ class QueryService:
             metadata=created_query.metadata,
         )
 
-    async def get_query_by_id(self, query_id: ObjectId) -> Optional[QueryResponse]:
+    async def get_query_by_id(self, query_id: ObjectId) -> Optional[FullQueryResponse]:
         query = await self.repo.query.get_by_id(query_id)
         if not query:
             raise CustomException(
@@ -61,7 +67,7 @@ class QueryService:
         updated_query = await self.repo.query.update(query_id, query_query)
         return updated_query
 
-    async def get_queries(self, query_query: QueriesGet) -> List[QueryResponse]:
+    async def get_queries(self, query_query: QueriesGet) -> List[FullQueryResponse]:
         filters = []
         if query_query.connection_id:
             filters.append(
