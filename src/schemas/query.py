@@ -34,7 +34,7 @@ class QueryResponse(BaseModel):
         populate_by_name = True
 
 
-class FullQueryResponse(BaseModel):
+class QueryTypeResponse(BaseModel):
     id: ObjectId = Field(alias="_id")
     name: str
     user_id: str

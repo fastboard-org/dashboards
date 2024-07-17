@@ -4,7 +4,7 @@ from beanie import PydanticObjectId as ObjectId
 from typing import Optional, List
 from schemas.query import QueryUpdate
 from motor.motor_asyncio import AsyncIOMotorClient as Session
-from schemas.query import FullQueryResponse
+from schemas.query import QueryTypeResponse
 
 
 class QueryRepository:
@@ -17,7 +17,7 @@ class QueryRepository:
         except Exception as e:
             raise CustomException(500, ERR_INTERNAL, f"Error creating query: {str(e)}")
 
-    async def get_by_id(self, query_id: ObjectId) -> Optional[FullQueryResponse]:
+    async def get_by_id(self, query_id: ObjectId) -> Optional[QueryTypeResponse]:
         try:
             pipeline = [
                 {"$match": {"_id": query_id}},
@@ -47,7 +47,7 @@ class QueryRepository:
                 },
             ]
             queries = await Query.aggregate(
-                pipeline, projection_model=FullQueryResponse, session=self.session
+                pipeline, projection_model=QueryTypeResponse, session=self.session
             ).to_list()
             return queries[0] if queries else None
 
@@ -75,7 +75,7 @@ class QueryRepository:
         except Exception as e:
             raise CustomException(500, ERR_INTERNAL, f"Error deleting query: {str(e)}")
 
-    async def get(self, filters: List) -> List[FullQueryResponse]:
+    async def get(self, filters: List) -> List[QueryTypeResponse]:
         try:
             match_stage = {"$match": {}}
             for filter in filters:
@@ -111,7 +111,7 @@ class QueryRepository:
                 },
             ]
             queries = await Query.aggregate(
-                pipeline, projection_model=FullQueryResponse, session=self.session
+                pipeline, projection_model=QueryTypeResponse, session=self.session
             ).to_list()
             return queries
 

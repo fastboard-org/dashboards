@@ -7,7 +7,7 @@ from schemas.query import (
     QueryResponse,
     QueryCreate,
     QueryUpdate,
-    FullQueryResponse,
+    QueryTypeResponse,
 )
 from repositories.registry import RepositoryRegistry
 from configs.database import Operators
@@ -43,7 +43,7 @@ class QueryService:
             metadata=created_query.metadata,
         )
 
-    async def get_query_by_id(self, query_id: ObjectId) -> Optional[FullQueryResponse]:
+    async def get_query_by_id(self, query_id: ObjectId) -> Optional[QueryTypeResponse]:
         query = await self.repo.query.get_by_id(query_id)
         if not query:
             raise CustomException(
@@ -67,7 +67,7 @@ class QueryService:
         updated_query = await self.repo.query.update(query_id, query_query)
         return updated_query
 
-    async def get_queries(self, query_query: QueriesGet) -> List[FullQueryResponse]:
+    async def get_queries(self, query_query: QueriesGet) -> List[QueryTypeResponse]:
         filters = []
         if query_query.connection_id:
             filters.append(
