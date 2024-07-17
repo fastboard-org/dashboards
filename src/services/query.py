@@ -94,24 +94,4 @@ class QueryService:
                 error_code=ERR_QUERY_NOT_FOUND,
                 description="Could not find query with the given id",
             )
-
-        async def delete_query_transaction(repo_registry: RepositoryRegistry):
-            dashboards = await repo_registry.dashboard.get(
-                [
-                    {
-                        "name": "metadata.queries",
-                        "value": {"id": str(query_id)},
-                        "operator": Operators.EM,
-                    }
-                ]
-            )
-            for dashboard in dashboards:
-                dashboard_queries = dashboard.metadata.get("queries", [])
-                dashboard_queries = [
-                    q for q in dashboard_queries if q.get("id") != str(query_id)
-                ]
-                dashboard_query = DashboardUpdate(metadata={"queries": dashboard_queries})
-                await repo_registry.dashboard.update(dashboard.id, dashboard_query)
-            return await repo_registry.query.delete(query_id)
-
-        return await self.repo.transaction(delete_query_transaction)
+        return await self.repo.query.delete(query_id)
