@@ -9,7 +9,6 @@ from beanie import PydanticObjectId as ObjectId
 from errors import CustomException, ERR_CONNECTION_NOT_FOUND
 from typing import Optional, List
 from repositories.registry import RepositoryRegistry
-from schemas.dashboard import DashboardUpdate
 from configs.database import Operators
 
 
@@ -97,7 +96,7 @@ class ConnectionService:
             )
             for query in queries:
                 await repo_registry.query.delete(query.id)
-                
+
             return await self.repo.connection.delete(connection_id)
 
         return await self.repo.transaction(delete_connection_transaction)

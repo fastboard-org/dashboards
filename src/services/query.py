@@ -4,7 +4,6 @@ from errors import CustomException, ERR_QUERY_NOT_FOUND, ERR_CONNECTION_NOT_FOUN
 from typing import Optional, List
 from schemas.query import QueriesGet, QueryResponse, QueryCreate, QueryUpdate
 from repositories.registry import RepositoryRegistry
-from schemas.dashboard import DashboardUpdate
 from configs.database import Operators
 
 
