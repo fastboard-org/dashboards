@@ -32,3 +32,16 @@ class QueryResponse(BaseModel):
     class Config:
         from_attributes = True
         populate_by_name = True
+
+
+class FullQueryResponse(BaseModel):
+    id: ObjectId = Field(alias="_id")
+    name: str
+    user_id: str
+    connection_id: ObjectId
+    connection_type: Optional[str] = None
+    metadata: Optional[dict] = {}
+
+    class Config:
+        from_attributes = True
+        populate_by_name = True
