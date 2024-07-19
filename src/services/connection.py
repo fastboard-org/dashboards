@@ -9,7 +9,6 @@ from beanie import PydanticObjectId as ObjectId
 from errors import CustomException, ERR_CONNECTION_NOT_FOUND
 from typing import Optional, List
 from repositories.registry import RepositoryRegistry
-from schemas.dashboard import DashboardUpdate
 from configs.database import Operators
 
 
@@ -97,24 +96,7 @@ class ConnectionService:
             )
             for query in queries:
                 await repo_registry.query.delete(query.id)
-                dashboards = await repo_registry.dashboard.get(
-                    [
-                        {
-                            "name": "metadata.queries",
-                            "value": {"id": str(query.id)},
-                            "operator": Operators.EM,
-                        }
-                    ]
-                )
-                for dashboard in dashboards:
-                    dashboard_queries = dashboard.metadata.get("queries", [])
-                    dashboard_queries = [
-                        q for q in dashboard_queries if q.get("id") != str(query.id)
-                    ]
-                    dashboard_query = DashboardUpdate(
-                        metadata={"queries": dashboard_queries}
-                    )
-                    await repo_registry.dashboard.update(dashboard.id, dashboard_query)
+
             return await self.repo.connection.delete(connection_id)
 
         return await self.repo.transaction(delete_connection_transaction)
