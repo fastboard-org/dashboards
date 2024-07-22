@@ -21,21 +21,27 @@ def get_dashboard_service():
     return service
 
 
-@DashboardsRouter.post("/", response_model=DashboardResponse)
+@DashboardsRouter.post(
+    "/", response_model=DashboardResponse, response_model_by_alias=False
+)
 async def create_dashboard(
     dashboard: DashboardCreate, service: DashboardService = Depends(get_dashboard_service)
 ):
     return await service.create_dashboard(dashboard)
 
 
-@DashboardsRouter.get("/{dashboard_id}", response_model=DashboardResponse)
+@DashboardsRouter.get(
+    "/{dashboard_id}", response_model=DashboardResponse, response_model_by_alias=False
+)
 async def get_dashboard(
     dashboard_id: ObjectId, service: DashboardService = Depends(get_dashboard_service)
 ):
     return await service.get_dashboard_by_id(dashboard_id)
 
 
-@DashboardsRouter.patch("/{dashboard_id}", response_model=DashboardResponse)
+@DashboardsRouter.patch(
+    "/{dashboard_id}", response_model=DashboardResponse, response_model_by_alias=False
+)
 async def update_dashboard(
     dashboard_id: ObjectId,
     dashboard: DashboardUpdate,
@@ -44,14 +50,18 @@ async def update_dashboard(
     return await service.update_dashboard(dashboard_id, dashboard)
 
 
-@DashboardsRouter.delete("/{dashboard_id}", response_model=bool)
+@DashboardsRouter.delete(
+    "/{dashboard_id}", response_model=bool, response_model_by_alias=False
+)
 async def delete_dashboard(
     dashboard_id: ObjectId, service: DashboardService = Depends(get_dashboard_service)
 ):
     return await service.delete_dashboard(dashboard_id)
 
 
-@DashboardsRouter.get("/", response_model=List[DashboardResponse])
+@DashboardsRouter.get(
+    "/", response_model=List[DashboardResponse], response_model_by_alias=False
+)
 async def list_dashboards(
     dashboards: DashboardsGet = Depends(),
     service: DashboardService = Depends(get_dashboard_service),

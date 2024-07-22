@@ -16,21 +16,25 @@ def get_folder_service():
     return service
 
 
-@FoldersRouter.post("/", response_model=FolderResponse)
+@FoldersRouter.post("/", response_model=FolderResponse, response_model_by_alias=False)
 async def create_folder(
     folder: FolderCreate, service: FolderService = Depends(get_folder_service)
 ):
     return await service.create_folder(folder)
 
 
-@FoldersRouter.get("/{folder_id}", response_model=FolderResponse)
+@FoldersRouter.get(
+    "/{folder_id}", response_model=FolderResponse, response_model_by_alias=False
+)
 async def get_folder(
     folder_id: ObjectId, service: FolderService = Depends(get_folder_service)
 ):
     return await service.get_folder_by_id(folder_id)
 
 
-@FoldersRouter.patch("/{folder_id}", response_model=FolderResponse)
+@FoldersRouter.patch(
+    "/{folder_id}", response_model=FolderResponse, response_model_by_alias=False
+)
 async def update_folder(
     folder_id: ObjectId,
     folder: FolderUpdate,
@@ -39,14 +43,16 @@ async def update_folder(
     return await service.update_folder(folder_id, folder)
 
 
-@FoldersRouter.delete("/{folder_id}", response_model=bool)
+@FoldersRouter.delete("/{folder_id}", response_model=bool, response_model_by_alias=False)
 async def delete_folder(
     folder_id: ObjectId, service: FolderService = Depends(get_folder_service)
 ):
     return await service.delete_folder(folder_id)
 
 
-@FoldersRouter.get("/", response_model=List[FolderResponse])
+@FoldersRouter.get(
+    "/", response_model=List[FolderResponse], response_model_by_alias=False
+)
 async def list_folders(
     folders: FoldersGet = Depends(), service: FolderService = Depends(get_folder_service)
 ):
