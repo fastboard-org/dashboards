@@ -31,7 +31,7 @@ class MongoDB:
         DB_USER = settings.DB_USER
         DB_PASSWORD = settings.DB_PASSWORD
 
-        DATABASE_URL = f"mongodb+srv://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
+        DATABASE_URL = f"{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
 
         self.client = AsyncIOMotorClient(DATABASE_URL)
         self.database = self.client[DB_NAME]
