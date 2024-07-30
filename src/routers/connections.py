@@ -20,7 +20,9 @@ def get_connection_service():
     return service
 
 
-@ConnectionsRouter.post("/", response_model=ConnectionResponse)
+@ConnectionsRouter.post(
+    "/", response_model=ConnectionResponse, response_model_by_alias=False
+)
 async def create_connection(
     connection: ConnectionCreate,
     service: ConnectionService = Depends(get_connection_service),
@@ -28,14 +30,18 @@ async def create_connection(
     return await service.create_connection(connection)
 
 
-@ConnectionsRouter.get("/{connection_id}", response_model=ConnectionResponse)
+@ConnectionsRouter.get(
+    "/{connection_id}", response_model=ConnectionResponse, response_model_by_alias=False
+)
 async def get_connection(
     connection_id: ObjectId, service: ConnectionService = Depends(get_connection_service)
 ):
     return await service.get_connection_by_id(connection_id)
 
 
-@ConnectionsRouter.get("/", response_model=List[ConnectionResponse])
+@ConnectionsRouter.get(
+    "/", response_model=List[ConnectionResponse], response_model_by_alias=False
+)
 async def list_connections(
     connections: ConnectionsGet = Depends(),
     service: ConnectionService = Depends(get_connection_service),
@@ -43,7 +49,9 @@ async def list_connections(
     return await service.get_connections(connections)
 
 
-@ConnectionsRouter.patch("/{connection_id}", response_model=ConnectionResponse)
+@ConnectionsRouter.patch(
+    "/{connection_id}", response_model=ConnectionResponse, response_model_by_alias=False
+)
 async def update_connection(
     connection_id: ObjectId,
     connection: ConnectionUpdate,
@@ -52,7 +60,9 @@ async def update_connection(
     return await service.update_connection(connection_id, connection)
 
 
-@ConnectionsRouter.delete("/{connection_id}", response_model=bool)
+@ConnectionsRouter.delete(
+    "/{connection_id}", response_model=bool, response_model_by_alias=False
+)
 async def delete_connection(
     connection_id: ObjectId, service: ConnectionService = Depends(get_connection_service)
 ):

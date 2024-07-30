@@ -22,21 +22,25 @@ def get_query_service():
     return service
 
 
-@QueriesRouter.post("/", response_model=QueryResponse)
+@QueriesRouter.post("/", response_model=QueryResponse, response_model_by_alias=False)
 async def create_query(
     query: QueryCreate, service: QueryService = Depends(get_query_service)
 ):
     return await service.create_query(query)
 
 
-@QueriesRouter.get("/{query_id}", response_model=QueryTypeResponse)
+@QueriesRouter.get(
+    "/{query_id}", response_model=QueryTypeResponse, response_model_by_alias=False
+)
 async def get_query(
     query_id: ObjectId, service: QueryService = Depends(get_query_service)
 ):
     return await service.get_query_by_id(query_id)
 
 
-@QueriesRouter.patch("/{query_id}", response_model=QueryResponse)
+@QueriesRouter.patch(
+    "/{query_id}", response_model=QueryResponse, response_model_by_alias=False
+)
 async def update_query(
     query_id: ObjectId,
     query: QueryUpdate,
@@ -45,14 +49,16 @@ async def update_query(
     return await service.update_query(query_id, query)
 
 
-@QueriesRouter.delete("/{query_id}", response_model=bool)
+@QueriesRouter.delete("/{query_id}", response_model=bool, response_model_by_alias=False)
 async def delete_query(
     query_id: ObjectId, service: QueryService = Depends(get_query_service)
 ):
     return await service.delete_query(query_id)
 
 
-@QueriesRouter.get("/", response_model=List[QueryTypeResponse])
+@QueriesRouter.get(
+    "/", response_model=List[QueryTypeResponse], response_model_by_alias=False
+)
 async def list_queries(
     queries: QueriesGet = Depends(), service: QueryService = Depends(get_query_service)
 ):
