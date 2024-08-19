@@ -42,7 +42,17 @@ class QueryRepository:
                 },
                 {
                     "$project": {
-                        "connection": 0,
+                        "connection.id": "$connection._id",
+                        "connection.name": "$connection.name",
+                        "connection.user_id": "$connection.user_id",
+                        "connection.type": "$connection.type",
+                        "connection.credentials": "$connection.credentials",
+                        "connection.variables": "$connection.variables",
+                        "connection_id": 1,
+                        "name": 1,
+                        "user_id": 1,
+                        "connection_type": 1,
+                        "metadata": 1,
                     }
                 },
             ]
@@ -106,7 +116,17 @@ class QueryRepository:
                 },
                 {
                     "$project": {
-                        "connection": 0,
+                        "connection.id": "$connection._id",
+                        "connection.name": "$connection.name",
+                        "connection.user_id": "$connection.user_id",
+                        "connection.type": "$connection.type",
+                        "connection.credentials": "$connection.credentials",
+                        "connection.variables": "$connection.variables",
+                        "connection_id": 1,
+                        "name": 1,
+                        "user_id": 1,
+                        "connection_type": 1,
+                        "metadata": 1,
                     }
                 },
             ]
