@@ -30,9 +30,11 @@ async def create_dashboard(
 
 @DashboardsRouter.get("/{dashboard_id}", response_model=DashboardResponse)
 async def get_dashboard(
-    dashboard_id: ObjectId, service: DashboardService = Depends(get_dashboard_service)
+    dashboard_id: ObjectId,
+    user_id: str,
+    service: DashboardService = Depends(get_dashboard_service),
 ):
-    return await service.get_dashboard_by_id(dashboard_id)
+    return await service.get_dashboard_by_id(dashboard_id, user_id)
 
 
 @DashboardsRouter.patch("/{dashboard_id}", response_model=DashboardResponse)
@@ -46,9 +48,11 @@ async def update_dashboard(
 
 @DashboardsRouter.delete("/{dashboard_id}", response_model=bool)
 async def delete_dashboard(
-    dashboard_id: ObjectId, service: DashboardService = Depends(get_dashboard_service)
+    dashboard_id: ObjectId,
+    user_id: str,
+    service: DashboardService = Depends(get_dashboard_service),
 ):
-    return await service.delete_dashboard(dashboard_id)
+    return await service.delete_dashboard(dashboard_id, user_id)
 
 
 @DashboardsRouter.get("/", response_model=List[DashboardResponse])

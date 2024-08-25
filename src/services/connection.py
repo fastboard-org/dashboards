@@ -6,7 +6,7 @@ from schemas.connection import (
     ConnectionUpdate,
 )
 from beanie import PydanticObjectId as ObjectId
-from errors import CustomException, ERR_CONNECTION_NOT_FOUND
+from errors import CustomException, ERR_CONNECTION_NOT_FOUND, ERR_NOT_AUTHORIZED
 from typing import Optional, List
 from repositories.registry import RepositoryRegistry
 from configs.database import Operators
@@ -41,7 +41,7 @@ class ConnectionService:
         )
 
     async def get_connection_by_id(
-        self, connection_id: ObjectId
+        self, connection_id: ObjectId, user_id: str
     ) -> Optional[ConnectionResponse]:
         connection = await self.repo.connection.get_by_id(connection_id)
         if not connection:
@@ -49,6 +49,12 @@ class ConnectionService:
                 status_code=404,
                 error_code=ERR_CONNECTION_NOT_FOUND,
                 description="Could not find connection with the given id",
+            )
+        if connection.user_id != user_id:
+            raise CustomException(
+                status_code=403,
+                error_code=ERR_NOT_AUTHORIZED,
+                description="You are not authorized to access this connection",
             )
         return connection
 
@@ -61,6 +67,12 @@ class ConnectionService:
                 status_code=404,
                 error_code=ERR_CONNECTION_NOT_FOUND,
                 description="Could not find connection with the given id",
+            )
+        if connection_query.user_id != connection.user_id:
+            raise CustomException(
+                status_code=403,
+                error_code=ERR_NOT_AUTHORIZED,
+                description="You are not authorized to update this connection",
             )
         updated_connection = await self.repo.connection.update(
             connection_id, connection_query
@@ -75,13 +87,19 @@ class ConnectionService:
             queries=connection.queries,
         )
 
-    async def delete_connection(self, connection_id: ObjectId) -> bool:
+    async def delete_connection(self, connection_id: ObjectId, user_id: str) -> bool:
         connection = await self.repo.connection.get_by_id(connection_id)
         if not connection:
             raise CustomException(
                 status_code=404,
                 error_code=ERR_CONNECTION_NOT_FOUND,
                 description="Could not find connection with the given id",
+            )
+        if connection.user_id != user_id:
+            raise CustomException(
+                status_code=403,
+                error_code=ERR_NOT_AUTHORIZED,
+                description="You are not authorized to delete this connection",
             )
 
         async def delete_connection_transaction(repo_registry: RepositoryRegistry):

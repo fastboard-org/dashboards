@@ -12,12 +12,13 @@ class QueryCreate(BaseModel):
 
 
 class QueryUpdate(BaseModel):
+    user_id: str
     name: Optional[str] = None
     metadata: Optional[dict] = None
 
 
 class QueriesGet(BaseModel):
-    user_id: Optional[str] = None
+    user_id: str
     name: Optional[str] = None
     connection_id: Optional[ObjectId] = None
 

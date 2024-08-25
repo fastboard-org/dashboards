@@ -11,11 +11,12 @@ class FolderCreate(BaseModel):
 
 
 class FolderUpdate(BaseModel):
+    user_id: str
     name: Optional[str]
 
 
 class FoldersGet(BaseModel):
-    user_id: Optional[str] = None
+    user_id: str
     name: Optional[str] = None
 
 

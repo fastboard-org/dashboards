@@ -12,13 +12,14 @@ class DashboardCreate(BaseModel):
 
 
 class DashboardUpdate(BaseModel):
+    user_id: str
     name: Optional[str] = None
     folder_id: Optional[ObjectId] = None
     metadata: Optional[dict] = None
 
 
 class DashboardsGet(BaseModel):
-    user_id: Optional[str] = None
+    user_id: str
     folder_id: Optional[ObjectId] = None
     name: Optional[str] = None
 

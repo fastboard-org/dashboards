@@ -31,9 +31,9 @@ async def create_query(
 
 @QueriesRouter.get("/{query_id}", response_model=QueryTypeResponse)
 async def get_query(
-    query_id: ObjectId, service: QueryService = Depends(get_query_service)
+    query_id: ObjectId, user_id: str, service: QueryService = Depends(get_query_service)
 ):
-    return await service.get_query_by_id(query_id)
+    return await service.get_query_by_id(query_id, user_id)
 
 
 @QueriesRouter.patch("/{query_id}", response_model=QueryResponse)
@@ -47,9 +47,9 @@ async def update_query(
 
 @QueriesRouter.delete("/{query_id}", response_model=bool)
 async def delete_query(
-    query_id: ObjectId, service: QueryService = Depends(get_query_service)
+    query_id: ObjectId, user_id: str, service: QueryService = Depends(get_query_service)
 ):
-    return await service.delete_query(query_id)
+    return await service.delete_query(query_id, user_id)
 
 
 @QueriesRouter.get("/", response_model=List[QueryTypeResponse])

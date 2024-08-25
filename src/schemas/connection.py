@@ -15,13 +15,14 @@ class ConnectionCreate(BaseModel):
 
 
 class ConnectionUpdate(BaseModel):
+    user_id: str
     name: Optional[str] = None
     credentials: Optional[dict] = None
     variables: Optional[dict] = None
 
 
 class ConnectionsGet(BaseModel):
-    user_id: Optional[str] = None
+    user_id: str
     name: Optional[str] = None
     type: Optional[ConnectionType] = None
 
