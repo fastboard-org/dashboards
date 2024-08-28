@@ -30,9 +30,11 @@ async def create_connection(
 
 @ConnectionsRouter.get("/{connection_id}", response_model=ConnectionResponse)
 async def get_connection(
-    connection_id: ObjectId, service: ConnectionService = Depends(get_connection_service)
+    connection_id: ObjectId,
+    user_id: str,
+    service: ConnectionService = Depends(get_connection_service),
 ):
-    return await service.get_connection_by_id(connection_id)
+    return await service.get_connection_by_id(connection_id, user_id)
 
 
 @ConnectionsRouter.get("/", response_model=List[ConnectionResponse])
@@ -54,6 +56,8 @@ async def update_connection(
 
 @ConnectionsRouter.delete("/{connection_id}", response_model=bool)
 async def delete_connection(
-    connection_id: ObjectId, service: ConnectionService = Depends(get_connection_service)
+    connection_id: ObjectId,
+    user_id: str,
+    service: ConnectionService = Depends(get_connection_service),
 ):
-    return await service.delete_connection(connection_id)
+    return await service.delete_connection(connection_id, user_id)

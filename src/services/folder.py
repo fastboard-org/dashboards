@@ -2,7 +2,7 @@ from models.folder import Folder
 from typing import List, Optional
 from bson import ObjectId
 from schemas.folder import FolderCreate, FolderUpdate, FolderResponse, FoldersGet
-from errors import CustomException, ERR_FOLDER_NOT_FOUND
+from errors import CustomException, ERR_FOLDER_NOT_FOUND, ERR_NOT_AUTHORIZED
 from repositories.registry import RepositoryRegistry
 from schemas.dashboard import DashboardUpdate
 from configs.database import Operators
@@ -28,13 +28,21 @@ class FolderService:
             dashboards=[],
         )
 
-    async def get_folder_by_id(self, folder_id: ObjectId) -> Optional[FolderResponse]:
+    async def get_folder_by_id(
+        self, folder_id: ObjectId, user_id: str
+    ) -> Optional[FolderResponse]:
         folder = await self.repo.folder.get_by_id(folder_id)
         if not folder:
             raise CustomException(
                 status_code=404,
                 error_code=ERR_FOLDER_NOT_FOUND,
                 description="Could not find folder with the given id",
+            )
+        if folder.user_id != user_id:
+            raise CustomException(
+                status_code=403,
+                error_code=ERR_NOT_AUTHORIZED,
+                description="You are not authorized to access this folder",
             )
         return folder
 
@@ -48,6 +56,12 @@ class FolderService:
                 error_code=ERR_FOLDER_NOT_FOUND,
                 description="Could not find folder with the given id",
             )
+        if folder.user_id != folder_query.user_id:
+            raise CustomException(
+                status_code=403,
+                error_code=ERR_NOT_AUTHORIZED,
+                description="You are not authorized to update this folder",
+            )
 
         updated_folder = await self.repo.folder.update(folder_id, folder_query)
         return FolderResponse(
@@ -57,13 +71,19 @@ class FolderService:
             dashboards=folder.dashboards,
         )
 
-    async def delete_folder(self, folder_id: ObjectId) -> bool:
+    async def delete_folder(self, folder_id: ObjectId, user_id: str) -> bool:
         folder = await self.repo.folder.get_by_id(folder_id)
         if not folder:
             raise CustomException(
                 status_code=404,
                 error_code=ERR_FOLDER_NOT_FOUND,
                 description="Could not find folder with the given id",
+            )
+        if folder.user_id != user_id:
+            raise CustomException(
+                status_code=403,
+                error_code=ERR_NOT_AUTHORIZED,
+                description="You are not authorized to delete this folder",
             )
 
         async def delete_folder_transaction(repo_registry: RepositoryRegistry):

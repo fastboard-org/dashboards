@@ -11,6 +11,7 @@ from errors import (
     CustomException,
     ERR_FOLDER_NOT_FOUND,
     ERR_DASHBOARD_NOT_FOUND,
+    ERR_NOT_AUTHORIZED,
 )
 from repositories.registry import RepositoryRegistry
 from configs.database import Operators
@@ -34,6 +35,12 @@ class DashboardService:
                     error_code=ERR_FOLDER_NOT_FOUND,
                     description="Could not find folder with the given id",
                 )
+            if folder.user_id != dashboard_query.user_id:
+                raise CustomException(
+                    status_code=403,
+                    error_code=ERR_NOT_AUTHORIZED,
+                    description="You are not authorized to create a dashboard here",
+                )
 
         dashboard = Dashboard(
             user_id=dashboard_query.user_id,
@@ -43,8 +50,39 @@ class DashboardService:
         )
         return await self.repo.dashboard.create(dashboard)
 
-    async def get_dashboard_by_id(
+    async def publish_dashboard(
+        self, dashboard_id: ObjectId, user_id: str
+    ) -> DashboardResponse:
+        dashboard = await self.repo.dashboard.get_by_id(dashboard_id)
+        if not dashboard:
+            raise CustomException(
+                status_code=404,
+                error_code=ERR_DASHBOARD_NOT_FOUND,
+                description="Could not find dashboard with the given id",
+            )
+        if dashboard.user_id != user_id:
+            raise CustomException(
+                status_code=403,
+                error_code=ERR_NOT_AUTHORIZED,
+                description="You are not authorized to publish this dashboard",
+            )
+        await self.repo.dashboard.publish(dashboard_id, dashboard)
+        return dashboard
+
+    async def get_published_dashboard(
         self, dashboard_id: ObjectId
+    ) -> Optional[DashboardResponse]:
+        published_dashboard = await self.repo.dashboard.get_published(dashboard_id)
+        if not published_dashboard:
+            raise CustomException(
+                status_code=404,
+                error_code=ERR_DASHBOARD_NOT_FOUND,
+                description="Could not find published dashboard with the given id",
+            )
+        return published_dashboard
+
+    async def get_dashboard_by_id(
+        self, dashboard_id: ObjectId, user_id: str
     ) -> Optional[DashboardResponse]:
         dashboard = await self.repo.dashboard.get_by_id(dashboard_id)
         if not dashboard:
@@ -52,6 +90,12 @@ class DashboardService:
                 status_code=404,
                 error_code=ERR_DASHBOARD_NOT_FOUND,
                 description="Could not find dashboard with the given id",
+            )
+        if dashboard.user_id != user_id:
+            raise CustomException(
+                status_code=403,
+                error_code=ERR_NOT_AUTHORIZED,
+                description="You are not authorized to access this dashboard",
             )
         return dashboard
 
@@ -65,6 +109,12 @@ class DashboardService:
                 error_code=ERR_DASHBOARD_NOT_FOUND,
                 description="Could not find dashboard with the given id",
             )
+        if dashboard.user_id != dashboard_query.user_id:
+            raise CustomException(
+                status_code=403,
+                error_code=ERR_NOT_AUTHORIZED,
+                description="You are not authorized to update this dashboard",
+            )
         if dashboard_query.folder_id:
             folder = await self.repo.folder.get_by_id(dashboard_query.folder_id)
             if not folder:
@@ -73,16 +123,28 @@ class DashboardService:
                     error_code=ERR_FOLDER_NOT_FOUND,
                     description="Could not find folder with the given id",
                 )
+            if folder.user_id != dashboard_query.user_id:
+                raise CustomException(
+                    status_code=403,
+                    error_code=ERR_NOT_AUTHORIZED,
+                    description="You are not authorized to move this dashboard here",
+                )
 
         return await self.repo.dashboard.update(dashboard_id, dashboard_query)
 
-    async def delete_dashboard(self, dashboard_id: ObjectId) -> bool:
+    async def delete_dashboard(self, dashboard_id: ObjectId, user_id: str) -> bool:
         dashboard = await self.repo.dashboard.get_by_id(dashboard_id)
         if not dashboard:
             raise CustomException(
                 status_code=404,
                 error_code=ERR_DASHBOARD_NOT_FOUND,
                 description="Could not find dashboard with the given id",
+            )
+        if dashboard.user_id != user_id:
+            raise CustomException(
+                status_code=403,
+                error_code=ERR_NOT_AUTHORIZED,
+                description="You are not authorized to delete this dashboard",
             )
         return await self.repo.dashboard.delete(dashboard_id)
 

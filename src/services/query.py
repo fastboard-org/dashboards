@@ -1,6 +1,11 @@
 from models.query import Query
 from beanie import PydanticObjectId as ObjectId
-from errors import CustomException, ERR_QUERY_NOT_FOUND, ERR_CONNECTION_NOT_FOUND
+from errors import (
+    CustomException,
+    ERR_QUERY_NOT_FOUND,
+    ERR_CONNECTION_NOT_FOUND,
+    ERR_NOT_AUTHORIZED,
+)
 from typing import Optional, List
 from schemas.query import (
     QueriesGet,
@@ -28,6 +33,12 @@ class QueryService:
                 error_code=ERR_CONNECTION_NOT_FOUND,
                 description="Could not find connection with the given id",
             )
+        if connection.user_id != query_query.user_id:
+            raise CustomException(
+                status_code=403,
+                error_code=ERR_NOT_AUTHORIZED,
+                description="You are not authorized to create a query in this connection",
+            )
         query = Query(
             name=query_query.name,
             user_id=query_query.user_id,
@@ -43,13 +54,21 @@ class QueryService:
             metadata=created_query.metadata,
         )
 
-    async def get_query_by_id(self, query_id: ObjectId) -> Optional[QueryTypeResponse]:
+    async def get_query_by_id(
+        self, query_id: ObjectId, user_id: str
+    ) -> Optional[QueryTypeResponse]:
         query = await self.repo.query.get_by_id(query_id)
         if not query:
             raise CustomException(
                 status_code=404,
                 error_code=ERR_QUERY_NOT_FOUND,
                 description="Could not find query with the given id",
+            )
+        if query.user_id != user_id:
+            raise CustomException(
+                status_code=403,
+                error_code=ERR_NOT_AUTHORIZED,
+                description="You are not authorized to access this query",
             )
         return query
 
@@ -63,7 +82,12 @@ class QueryService:
                 error_code=ERR_QUERY_NOT_FOUND,
                 description="Could not find query with the given id",
             )
-
+        if query.user_id != query_query.user_id:
+            raise CustomException(
+                status_code=403,
+                error_code=ERR_NOT_AUTHORIZED,
+                description="You are not authorized to update this query",
+            )
         updated_query = await self.repo.query.update(query_id, query_query)
         return updated_query
 
@@ -91,12 +115,18 @@ class QueryService:
             )
         return await self.repo.query.get(filters)
 
-    async def delete_query(self, query_id: ObjectId) -> bool:
+    async def delete_query(self, query_id: ObjectId, user_id: str) -> bool:
         query = await self.repo.query.get_by_id(query_id)
         if not query:
             raise CustomException(
                 status_code=404,
                 error_code=ERR_QUERY_NOT_FOUND,
                 description="Could not find query with the given id",
+            )
+        if query.user_id != user_id:
+            raise CustomException(
+                status_code=403,
+                error_code=ERR_NOT_AUTHORIZED,
+                description="You are not authorized to delete this query",
             )
         return await self.repo.query.delete(query_id)
