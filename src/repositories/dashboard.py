@@ -1,4 +1,4 @@
-from models.dashboard import Dashboard
+from models.dashboard import Dashboard, PublishedDashboard
 from typing import List, Optional
 from bson import ObjectId
 from schemas.dashboard import (
@@ -18,6 +18,38 @@ class DashboardRepository:
         except Exception as e:
             raise CustomException(
                 500, ERR_INTERNAL, f"Error creating dashboard: {str(e)}"
+            )
+
+    async def publish(self, dashboard_id, dashboard) -> Dashboard:
+        try:
+            published_dashboard = await PublishedDashboard.find_one(
+                {"dashboard_id": dashboard_id}, session=self.session
+            )
+            if not published_dashboard:
+                published_dashboard = PublishedDashboard(
+                    dashboard_id=dashboard_id, dashboard=dashboard
+                )
+            else:
+                published_dashboard.dashboard_id = dashboard_id
+                published_dashboard.dashboard = dashboard
+
+            await published_dashboard.save(session=self.session)
+
+            return published_dashboard
+        except Exception as e:
+            raise CustomException(
+                500, ERR_INTERNAL, f"Error publishing dashboard: {str(e)}"
+            )
+
+    async def get_published(self, dashboard_id: ObjectId) -> Optional[PublishedDashboard]:
+        try:
+            published_dashboard = await PublishedDashboard.find_one(
+                {"dashboard_id": dashboard_id}, session=self.session
+            )
+            return published_dashboard.dashboard if published_dashboard else None
+        except Exception as e:
+            raise CustomException(
+                500, ERR_INTERNAL, f"Error fetching published dashboard: {str(e)}"
             )
 
     async def get_by_id(self, dashboard_id: ObjectId) -> Optional[Dashboard]:

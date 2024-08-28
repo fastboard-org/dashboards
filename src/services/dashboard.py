@@ -39,7 +39,7 @@ class DashboardService:
                 raise CustomException(
                     status_code=403,
                     error_code=ERR_NOT_AUTHORIZED,
-                    description="You are not authorized to create a dashboard in this folder",
+                    description="You are not authorized to create a dashboard here",
                 )
 
         dashboard = Dashboard(
@@ -49,6 +49,37 @@ class DashboardService:
             metadata=dashboard_query.metadata,
         )
         return await self.repo.dashboard.create(dashboard)
+
+    async def publish_dashboard(
+        self, dashboard_id: ObjectId, user_id: str
+    ) -> DashboardResponse:
+        dashboard = await self.repo.dashboard.get_by_id(dashboard_id)
+        if not dashboard:
+            raise CustomException(
+                status_code=404,
+                error_code=ERR_DASHBOARD_NOT_FOUND,
+                description="Could not find dashboard with the given id",
+            )
+        if dashboard.user_id != user_id:
+            raise CustomException(
+                status_code=403,
+                error_code=ERR_NOT_AUTHORIZED,
+                description="You are not authorized to publish this dashboard",
+            )
+        await self.repo.dashboard.publish(dashboard_id, dashboard)
+        return dashboard
+
+    async def get_published_dashboard(
+        self, dashboard_id: ObjectId
+    ) -> Optional[DashboardResponse]:
+        published_dashboard = await self.repo.dashboard.get_published(dashboard_id)
+        if not published_dashboard:
+            raise CustomException(
+                status_code=404,
+                error_code=ERR_DASHBOARD_NOT_FOUND,
+                description="Could not find published dashboard with the given id",
+            )
+        return published_dashboard
 
     async def get_dashboard_by_id(
         self, dashboard_id: ObjectId, user_id: str
@@ -96,7 +127,7 @@ class DashboardService:
                 raise CustomException(
                     status_code=403,
                     error_code=ERR_NOT_AUTHORIZED,
-                    description="You are not authorized to move this dashboard to this folder",
+                    description="You are not authorized to move this dashboard here",
                 )
 
         return await self.repo.dashboard.update(dashboard_id, dashboard_query)
