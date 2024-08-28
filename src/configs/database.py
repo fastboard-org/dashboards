@@ -1,7 +1,7 @@
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
 from configs.settings import settings
-from models.dashboard import Dashboard
+from models.dashboard import Dashboard, PublishedDashboard
 from models.folder import Folder
 from models.connection import Connection
 from models.query import Query
@@ -36,7 +36,8 @@ class MongoDB:
         self.client = AsyncIOMotorClient(DATABASE_URL)
         self.database = self.client[DB_NAME]
         await init_beanie(
-            self.database, document_models=[Dashboard, Folder, Connection, Query]
+            self.database,
+            document_models=[Dashboard, PublishedDashboard, Folder, Connection, Query],
         )
 
     async def disconnect(self):
