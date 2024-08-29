@@ -10,6 +10,7 @@ from errors import CustomException, ERR_CONNECTION_NOT_FOUND, ERR_NOT_AUTHORIZED
 from typing import Optional, List
 from repositories.registry import RepositoryRegistry
 from configs.database import Operators
+from configs.settings import settings
 
 
 class ConnectionService:
@@ -41,7 +42,7 @@ class ConnectionService:
         )
 
     async def get_connection_by_id(
-        self, connection_id: ObjectId, user_id: str
+        self, connection_id: ObjectId, user_id: str, api_key: str
     ) -> Optional[ConnectionResponse]:
         connection = await self.repo.connection.get_by_id(connection_id)
         if not connection:
@@ -50,7 +51,7 @@ class ConnectionService:
                 error_code=ERR_CONNECTION_NOT_FOUND,
                 description="Could not find connection with the given id",
             )
-        if connection.user_id != user_id:
+        if connection.user_id != user_id and settings.API_KEY != api_key:
             raise CustomException(
                 status_code=403,
                 error_code=ERR_NOT_AUTHORIZED,

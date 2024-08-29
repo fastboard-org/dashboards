@@ -10,8 +10,11 @@ from schemas.connection import (
 )
 from repositories.registry import RepositoryRegistry
 from configs.database import mongodb as db
+from fastapi.security import APIKeyHeader
 
 ConnectionsRouter = APIRouter(prefix="/v1/connections", tags=["connections"])
+
+api_key_query = APIKeyHeader(name="api_key", auto_error=False)
 
 
 def get_connection_service():
@@ -31,10 +34,12 @@ async def create_connection(
 @ConnectionsRouter.get("/{connection_id}", response_model=ConnectionResponse)
 async def get_connection(
     connection_id: ObjectId,
-    user_id: str,
+    user_id: str | None = None,
+    api_key: str = Depends(api_key_query),
     service: ConnectionService = Depends(get_connection_service),
 ):
-    return await service.get_connection_by_id(connection_id, user_id)
+    print(user_id, api_key)
+    return await service.get_connection_by_id(connection_id, user_id, api_key)
 
 
 @ConnectionsRouter.get("/", response_model=List[ConnectionResponse])

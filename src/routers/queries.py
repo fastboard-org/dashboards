@@ -11,9 +11,11 @@ from schemas.query import (
 )
 from repositories.registry import RepositoryRegistry
 from configs.database import mongodb as db
-
+from fastapi.security import APIKeyHeader
 
 QueriesRouter = APIRouter(prefix="/v1/queries", tags=["queries"])
+
+api_key_query = APIKeyHeader(name="api_key", auto_error=False)
 
 
 def get_query_service():
@@ -31,9 +33,13 @@ async def create_query(
 
 @QueriesRouter.get("/{query_id}", response_model=QueryTypeResponse)
 async def get_query(
-    query_id: ObjectId, user_id: str, service: QueryService = Depends(get_query_service)
+    query_id: ObjectId,
+    user_id: str | None = None,
+    api_key: str = Depends(api_key_query),
+    service: QueryService = Depends(get_query_service),
 ):
-    return await service.get_query_by_id(query_id, user_id)
+    print(user_id, api_key)
+    return await service.get_query_by_id(query_id, user_id, api_key)
 
 
 @QueriesRouter.patch("/{query_id}", response_model=QueryResponse)
