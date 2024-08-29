@@ -38,7 +38,6 @@ async def get_query(
     api_key: str = Depends(api_key_query),
     service: QueryService = Depends(get_query_service),
 ):
-    print(user_id, api_key)
     return await service.get_query_by_id(query_id, user_id, api_key)
 
 

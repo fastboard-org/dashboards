@@ -38,7 +38,6 @@ async def get_connection(
     api_key: str = Depends(api_key_query),
     service: ConnectionService = Depends(get_connection_service),
 ):
-    print(user_id, api_key)
     return await service.get_connection_by_id(connection_id, user_id, api_key)
 
 
