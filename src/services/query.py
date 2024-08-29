@@ -16,6 +16,7 @@ from schemas.query import (
 )
 from repositories.registry import RepositoryRegistry
 from configs.database import Operators
+from configs.settings import settings
 
 
 class QueryService:
@@ -55,7 +56,7 @@ class QueryService:
         )
 
     async def get_query_by_id(
-        self, query_id: ObjectId, user_id: str
+        self, query_id: ObjectId, user_id: str, api_key: str
     ) -> Optional[QueryTypeResponse]:
         query = await self.repo.query.get_by_id(query_id)
         if not query:
@@ -64,7 +65,7 @@ class QueryService:
                 error_code=ERR_QUERY_NOT_FOUND,
                 description="Could not find query with the given id",
             )
-        if query.user_id != user_id:
+        if query.user_id != user_id and settings.API_KEY != api_key:
             raise CustomException(
                 status_code=403,
                 error_code=ERR_NOT_AUTHORIZED,
