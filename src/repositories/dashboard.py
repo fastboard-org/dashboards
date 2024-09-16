@@ -41,6 +41,20 @@ class DashboardRepository:
                 500, ERR_INTERNAL, f"Error publishing dashboard: {str(e)}"
             )
 
+    async def unpublish(self, dashboard_id: ObjectId) -> bool:
+        try:
+            published_dashboard = await PublishedDashboard.find_one(
+                {"dashboard_id": dashboard_id}, session=self.session
+            )
+            if published_dashboard:
+                await published_dashboard.delete(session=self.session)
+                return True
+            return False
+        except Exception as e:
+            raise CustomException(
+                500, ERR_INTERNAL, f"Error unpublishing dashboard: {str(e)}"
+            )
+
     async def get_published(self, dashboard_id: ObjectId) -> Optional[PublishedDashboard]:
         try:
             published_dashboard = await PublishedDashboard.find_one(

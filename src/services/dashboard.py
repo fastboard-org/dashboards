@@ -146,7 +146,16 @@ class DashboardService:
                 error_code=ERR_NOT_AUTHORIZED,
                 description="You are not authorized to delete this dashboard",
             )
-        return await self.repo.dashboard.delete(dashboard_id)
+
+        async def delete_dashboard_transaction(repo_registry: RepositoryRegistry):
+            published_dashboard = await repo_registry.dashboard.get_published(
+                dashboard_id
+            )
+            if published_dashboard:
+                await repo_registry.dashboard.unpublish(published_dashboard.id)
+            return await repo_registry.dashboard.delete(dashboard_id)
+
+        return await self.repo.transaction(delete_dashboard_transaction)
 
     async def get_dashboards(
         self, dashboards_query: DashboardsGet
