@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     DB_HOST: str
     DB_NAME: str
     API_KEY: str
+    PRIVATE_KEY: str
 
     class Config:
         env_file = ".env"

@@ -17,6 +17,7 @@ from schemas.query import (
 from repositories.registry import RepositoryRegistry
 from configs.database import Operators
 from configs.settings import settings
+from lib.encryption import decrypt
 
 
 class QueryService:
@@ -71,6 +72,10 @@ class QueryService:
                 error_code=ERR_NOT_AUTHORIZED,
                 description="You are not authorized to access this query",
             )
+        if "openai_api_key" in query.connection.credentials:
+            query.connection.credentials["openai_api_key_preview"] = (
+                "*" * 5 + decrypt(query.connection.credentials["openai_api_key"])[-4:]
+            )
         return query
 
     async def update_query(
@@ -114,7 +119,13 @@ class QueryService:
             filters.append(
                 {"name": "name", "value": query_query.name, "operator": Operators.EQ}
             )
-        return await self.repo.query.get(filters)
+        queries = await self.repo.query.get(filters)
+        for query in queries:
+            if "openai_api_key" in query.connection.credentials:
+                query.connection.credentials["openai_api_key_preview"] = (
+                    "*" * 5 + decrypt(query.connection.credentials["openai_api_key"])[-4:]
+                )
+        return queries
 
     async def delete_query(self, query_id: ObjectId, user_id: str) -> bool:
         query = await self.repo.query.get_by_id(query_id)
