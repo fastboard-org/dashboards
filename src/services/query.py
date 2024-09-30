@@ -95,11 +95,6 @@ class QueryService:
                 description="You are not authorized to update this query",
             )
         updated_query = await self.repo.query.update(query_id, query_query)
-        if "openai_api_key" in updated_query.connection.credentials:
-            updated_query.connection.credentials["openai_api_key_preview"] = (
-                "*" * 5
-                + decrypt(updated_query.connection.credentials["openai_api_key"])[-4:]
-            )
         return updated_query
 
     async def get_queries(self, query_query: QueriesGet) -> List[QueryTypeResponse]:
