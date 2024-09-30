@@ -11,6 +11,7 @@ from typing import Optional, List
 from repositories.registry import RepositoryRegistry
 from configs.database import Operators
 from configs.settings import settings
+from lib.encryption import encrypt, decrypt
 
 
 class ConnectionService:
@@ -23,14 +24,24 @@ class ConnectionService:
     async def create_connection(
         self, connection_query: ConnectionCreate
     ) -> ConnectionResponse:
+        credentials = {}
+        for key, value in connection_query.credentials.items():
+            if key == "openai_api_key":
+                credentials[key] = encrypt(value)
+            else:
+                credentials[key] = value
         connection = Connection(
             name=connection_query.name,
             user_id=connection_query.user_id,
             type=connection_query.type,
-            credentials=connection_query.credentials,
+            credentials=credentials,
             variables=connection_query.variables,
         )
         created_connection = await self.repo.connection.create(connection)
+        if "openai_api_key" in created_connection.credentials:
+            created_connection.credentials["openai_api_key_preview"] = (
+                "*" * 5 + connection_query.credentials["openai_api_key"][-4:]
+            )
         return ConnectionResponse(
             id=created_connection.id,
             name=created_connection.name,
@@ -57,6 +68,10 @@ class ConnectionService:
                 error_code=ERR_NOT_AUTHORIZED,
                 description="You are not authorized to access this connection",
             )
+        if "openai_api_key" in connection.credentials:
+            connection.credentials["openai_api_key_preview"] = (
+                "*" * 5 + decrypt(connection.credentials["openai_api_key"])[-4:]
+            )
         return connection
 
     async def update_connection(
@@ -75,9 +90,17 @@ class ConnectionService:
                 error_code=ERR_NOT_AUTHORIZED,
                 description="You are not authorized to update this connection",
             )
+        if "openai_api_key" in connection_query.credentials:
+            connection_query.credentials["openai_api_key"] = encrypt(
+                connection_query.credentials["openai_api_key"]
+            )
         updated_connection = await self.repo.connection.update(
             connection_id, connection_query
         )
+        if "openai_api_key" in updated_connection.credentials:
+            updated_connection.credentials["openai_api_key_preview"] = (
+                "*" * 5 + connection_query.credentials["openai_api_key"][-4:]
+            )
         return ConnectionResponse(
             id=updated_connection.id,
             name=updated_connection.name,
@@ -148,4 +171,10 @@ class ConnectionService:
                     "operator": Operators.EQ,
                 }
             )
-        return await self.repo.connection.get(filters)
+        connections = await self.repo.connection.get(filters)
+        for connection in connections:
+            if "openai_api_key" in connection.credentials:
+                connection.credentials["openai_api_key_preview"] = (
+                    "*" * 5 + decrypt(connection.credentials["openai_api_key"])[-4:]
+                )
+        return connections
