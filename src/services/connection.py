@@ -77,8 +77,6 @@ class ConnectionService:
     async def update_connection(
         self, connection_id: ObjectId, connection_query: ConnectionUpdate
     ) -> Optional[ConnectionResponse]:
-        connection_query = connection_query.model_dump(exclude_unset=True)
-
         connection = await self.repo.connection.get_by_id(connection_id)
         if not connection:
             raise CustomException(
