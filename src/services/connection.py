@@ -90,6 +90,7 @@ class ConnectionService:
                 error_code=ERR_NOT_AUTHORIZED,
                 description="You are not authorized to update this connection",
             )
+        unencrypted_api_key = connection_query.credentials["openai_api_key"]
         if "openai_api_key" in connection_query.credentials:
             connection_query.credentials["openai_api_key"] = encrypt(
                 connection_query.credentials["openai_api_key"]
@@ -99,7 +100,7 @@ class ConnectionService:
         )
         if "openai_api_key" in updated_connection.credentials:
             updated_connection.credentials["openai_api_key_preview"] = (
-                "*" * 5 + connection_query.credentials["openai_api_key"][-4:]
+                "*" * 5 + unencrypted_api_key[-4:]
             )
         return ConnectionResponse(
             id=updated_connection.id,
