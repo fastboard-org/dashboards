@@ -90,11 +90,24 @@ class ConnectionService:
                 error_code=ERR_NOT_AUTHORIZED,
                 description="You are not authorized to update this connection",
             )
+        #  we store the old main_url and the encrypted api key in the existing connection
+        # to use it if the connection query does not contain one of them
+        encrypted_api_key = connection.credentials.get("openai_api_key", None)
+        main_url = connection.credentials.get("main_url", None)
+
+        if not "main_url" in connection_query.credentials and main_url:
+            connection_query.credentials["main_url"] = main_url
+
         if "openai_api_key" in connection_query.credentials:
             unencrypted_api_key = connection_query.credentials["openai_api_key"]
             connection_query.credentials["openai_api_key"] = encrypt(
                 connection_query.credentials["openai_api_key"]
             )
+        else:
+            if encrypted_api_key:
+                connection_query.credentials["openai_api_key"] = encrypted_api_key
+                unencrypted_api_key = decrypt(encrypted_api_key)
+
         updated_connection = await self.repo.connection.update(
             connection_id, connection_query
         )
