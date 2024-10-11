@@ -95,7 +95,7 @@ class ConnectionService:
         encrypted_api_key = connection.credentials.get("openai_api_key", None)
         main_url = connection.credentials.get("main_url", None)
 
-        if not "main_url" in connection_query.credentials and main_url:
+        if "main_url" not in connection_query.credentials and main_url:
             connection_query.credentials["main_url"] = main_url
 
         if "openai_api_key" in connection_query.credentials:
